@@ -139,6 +139,29 @@ router.get('/search/:query?',LoggedInAsUserRequired,async(req,res)=>{
     }
 })
 
+router.get('/autocomplete/:query?',LoggedInAsUserRequired,async(req,res)=>{
+    try {
+        var searchQuery = req.params.query
+        var users = User.find({})
+        if (searchQuery) users.find({
+            $or:
+                [
+                    { username: new RegExp(searchQuery, 'i') },
+                    { email: new RegExp(searchQuery, 'i') },
+                    { firstName: new RegExp(searchQuery, 'i') },
+                    { lastName: new RegExp(searchQuery, 'i') }
+                ]
+
+        }).select("username firstName lastName -_id").sort('+username').limit(3)
+        // users.
+        return res.json(await users.lean().exec())
+    }
+    catch{
+        return res.sendStatus(500)
+    }
+})
+
+
 router.patch('/follow/:userId',LoggedInAsUserRequired,async(req,res)=>{
     User.updateOne(
         {_id:req.user.user._id},
